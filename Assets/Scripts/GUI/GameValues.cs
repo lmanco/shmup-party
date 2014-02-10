@@ -19,6 +19,8 @@ public class GameValues : MonoBehaviour {
 	// dictionaries of editable values for menu inspector integration
 	public static Dictionary<string, int> intValues = new Dictionary<string, int>();
 	public static Dictionary<string, float> floatValues = new Dictionary<string, float>();
+	
+	public const int MAX_PLAYERS = 4;
 
 	void Awake () {
 		// add int values to dictionaries here

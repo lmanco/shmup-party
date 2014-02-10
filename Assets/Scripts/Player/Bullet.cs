@@ -15,9 +15,29 @@ public class Bullet : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-		transform.position += transform.up * speed * Time.deltaTime;
-		seconds += Time.deltaTime;
-		if (seconds > maxSeconds)
-			Destroy(gameObject);
+		if (networkView.isMine){
+			transform.position += transform.up * speed * Time.deltaTime;
+			seconds += Time.deltaTime;
+			if (seconds > maxSeconds){
+				networkView.RPC("Destroy", RPCMode.Others);
+				Destroy(gameObject);
+			}
+		}
+	}
+	
+	[RPC]
+	void Destroy() {
+		Destroy(gameObject);
+	}
+	
+	public void SetColor(Color color){
+		GetComponent<SpriteRenderer>().color = color;
+		Color theColor = GetComponent<SpriteRenderer>().color;
+		networkView.RPC("UpdateColor", RPCMode.Others, theColor.r, theColor.g, theColor.b, theColor.a);
+	}
+	
+	[RPC]
+	void UpdateColor(float r, float g, float b, float a){
+		GetComponent<SpriteRenderer>().color = new Color(r, g, b, a);
 	}
 }

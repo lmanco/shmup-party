@@ -8,10 +8,16 @@ public class NetworkManager : MonoBehaviour {
 	public MenuItem hostList, hostButtonPrefab;
 	public HostButtonAction hostButtonActionPrefab;
 	public Menu networkMenu, hostMenu, clientMenu;
+	public int numConnectedPlayers;
 	
 	private static NetworkManager self;
 	private bool refreshing;
 	private HostData[] hostData;
+	private string lobbyName = "Lobby";
+	
+	void Awake(){
+		DontDestroyOnLoad(gameObject);
+	}
 
 	// Use this for initialization
 	void Start () {
@@ -37,7 +43,7 @@ public class NetworkManager : MonoBehaviour {
 					//HostButtonAction hostButtonAction = (HostButtonAction)Instantiate(hostButtonActionPrefab, Vector3.zero, Quaternion.identity);
 					//hostButtonAction.SetHostData(hostDatum);
 					MenuItem hostButton = (MenuItem)Instantiate(hostButtonPrefab, Vector3.zero, Quaternion.identity);
-					hostButton.text = hostDatum.gameName + " (" + hostDatum.connectedPlayers + "/" + PlayersConnectedBox.MAX_PLAYERS + ")";
+					hostButton.text = hostDatum.gameName + " (" + hostDatum.connectedPlayers + "/" + GameValues.MAX_PLAYERS + ")";
 					HostButtonAction hostButtonAction = (HostButtonAction)hostButton.action;
 					hostButtonAction.SetHostData(hostDatum);
 					//hostButton.action = hostButtonAction;
@@ -76,26 +82,68 @@ public class NetworkManager : MonoBehaviour {
 	
 	// client
 	void OnConnectedToServer(){
-		networkMenu.on = false;
-		clientMenu.on = true;
+		if (Application.loadedLevelName == lobbyName){
+			networkMenu.on = false;
+			clientMenu.on = true;
+		}
 	}
 	
 	// client
 	void OnDisconnectedFromServer(NetworkDisconnection info){
-		RefreshHostList();
-		clientMenu.on = false;
-		networkMenu.on = true;
-		PlayersConnectedBox.GetInstance().SetPlayersConnected(0);
+		if (Application.loadedLevelName == lobbyName){
+			RefreshHostList();
+			clientMenu.on = false;
+			networkMenu.on = true;
+			PlayersConnectedBox.GetInstance().SetPlayersConnected(0);
+		}
+		else{
+			Application.LoadLevel(lobbyName);
+		}
 	}
 	
 	// server
 	void OnPlayerConnected(NetworkPlayer player) {
-		PlayersConnectedBox.GetInstance().AddPlayersConnected(1);
+		if (Application.loadedLevelName == lobbyName){
+			PlayersConnectedBox.GetInstance().AddPlayersConnected(1);
+		}
+		UpdateNumConnectedPlayers();
 	}
 	
 	// server
 	void OnPlayerDisconnected(NetworkPlayer player) {
-		PlayersConnectedBox.GetInstance().AddPlayersConnected(-1);
+		if (Application.loadedLevelName == lobbyName){
+			PlayersConnectedBox.GetInstance().AddPlayersConnected(-1);
+		}
+		else{
+			foreach (GameObject g in GameObject.FindGameObjectsWithTag("Player")){
+				if (player.ToString() == g.GetComponent<Player>().GetPNum()){
+					Destroy(g);
+					networkView.RPC("DestroyPlayer", RPCMode.Others, player.ToString());
+				}
+			}
+		}
+		UpdateNumConnectedPlayers();
+	}
+	
+	public void UpdateNumConnectedPlayers(){
+		if (Network.isServer){
+			numConnectedPlayers = Network.connections.Length + 1;
+			networkView.RPC("SetNumConnectedPlayers", RPCMode.Others, numConnectedPlayers);
+		}
+	}
+	
+	[RPC]
+	void SetNumConnectedPlayers(int num){
+		numConnectedPlayers = num;
+	}
+	
+	[RPC]
+	void DestroyPlayer(string pNum){
+		foreach (GameObject g in GameObject.FindGameObjectsWithTag("Player")){
+			if (pNum == g.GetComponent<Player>().GetPNum()){
+				Destroy(g);
+			}		
+		}
 	}
 	
 	/*void OnServerInitialized(){

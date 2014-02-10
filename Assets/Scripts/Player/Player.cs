@@ -15,40 +15,48 @@ public class Player : BoundaryAware {
 
 	private float fireTimer;
 	private bool spawning, blinking;
+	private int spawnX;
 	private Sprite playerSprite;
 	private float blinkTimer = 0f;
+	private string pNum;
 
 	// Use this for initialization
 	void Start () {
-		fireTimer = 0f;
-		playerSprite = GetComponent<SpriteRenderer>().sprite;
-		setBounds();
+		if (networkView.isMine){
+			fireTimer = 0f;
+			playerSprite = GetComponent<SpriteRenderer>().sprite;
+			setBounds();
+			spawning = true;
+			pNum = "none";
 		
-		Spawn();
+			//Spawn();
+		}
 	}
 
 	// Update is called once per frame
 	void Update () {
-		if (blinking) {
-			blinkTimer += Time.deltaTime;
-			if (blinkTimer >= blinkTimeSeconds){
-				blinking = false;
-				blinkTimer = 0;
+		if (networkView.isMine){
+			if (blinking) {
+				blinkTimer += Time.deltaTime;
+				if (blinkTimer >= blinkTimeSeconds){
+					blinking = false;
+					blinkTimer = 0;
+				}
 			}
-		}
-	
-		if (spawning){
-			if (transform.position.y >= -4){
-				transform.position = new Vector3(transform.position.x, -4, 0);
-				spawning = false;
+		
+			if (spawning){
+				if (transform.position.y >= -4){
+					transform.position = new Vector3(transform.position.x, -4, 0);
+					spawning = false;
+				}
+				else
+					transform.position = new Vector3(transform.position.x, transform.position.y + moveSpeed * Time.deltaTime, 0);
 			}
-			else
-				transform.position = new Vector3(transform.position.x, transform.position.y + moveSpeed * Time.deltaTime, 0);
-		}
-		else{
-			Move();
-			Shoot();
-			UpdateFireTimer();
+			else{
+				Move();
+				Shoot();
+				UpdateFireTimer();
+			}
 		}
 	}
 
@@ -82,7 +90,8 @@ public class Player : BoundaryAware {
 	void Shoot () {
 		if (Input.GetButton(fire) && fireTimer <= 0){
 			fireTimer = fireIntervalSeconds;
-			Instantiate(bullet, new Vector3(transform.position.x, transform.position.y + halfHeight / 100.0f + 0.1f, 0), Quaternion.identity);
+			GameObject bulletObj = (GameObject)Network.Instantiate(bullet, new Vector3(transform.position.x, transform.position.y + halfHeight / 100.0f + 0.1f, 0), Quaternion.identity, 0);
+			bulletObj.GetComponent<Bullet>().SetColor(GetComponent<SpriteRenderer>().color);
 		}
 	}
 	
@@ -109,9 +118,38 @@ public class Player : BoundaryAware {
 			GetComponent<SpriteRenderer>().sprite = playerSprite;
 	}
 	
-	void Spawn() {
-		transform.position = new Vector3(Camera.main.ScreenToWorldPoint(new Vector3(Screen.width / 2, 0, 0)).x, -10, 0);
+	public void Spawn() {
+		transform.position = new Vector3(Camera.main.ScreenToWorldPoint(new Vector3(spawnX, 0, 0)).x, -10, 0);
 		spawning = true;
 		StartCoroutine("Blink");
+	}
+	
+	public void SetColor(Color color){
+		GetComponent<SpriteRenderer>().color = color;
+		Color theColor = GetComponent<SpriteRenderer>().color;
+		networkView.RPC("UpdateColor", RPCMode.OthersBuffered, theColor.r, theColor.g, theColor.b, theColor.a);
+	}
+	
+	[RPC]
+	void UpdateColor(float r, float g, float b, float a){
+		GetComponent<SpriteRenderer>().color = new Color(r, g, b, a);
+	}
+	
+	public void SetSpawnX(int spawnX){
+		this.spawnX = spawnX;
+	}
+	
+	public void SetPNum(string pNum){
+		this.pNum = pNum;
+		networkView.RPC("UpdatePNum", RPCMode.OthersBuffered, pNum);
+	}
+	
+	public string GetPNum(){
+		return pNum;
+	}
+	
+	[RPC]
+	void UpdatePNum(string pNum){
+		this.pNum = pNum;
 	}
 }

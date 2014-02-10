@@ -16,7 +16,7 @@ public class HostButtonAction : DefaultMenuAction {
 	}
 	
 	public override void Action(){
-		if (hostData.connectedPlayers < PlayersConnectedBox.MAX_PLAYERS)
+		if (hostData.connectedPlayers < GameValues.MAX_PLAYERS)
 			Network.Connect(hostData);
 	}
 	

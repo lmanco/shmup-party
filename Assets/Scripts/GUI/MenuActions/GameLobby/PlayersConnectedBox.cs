@@ -4,10 +4,8 @@ using System.Collections;
 public class PlayersConnectedBox : MonoBehaviour {
 
 	public MenuItem box;
-	public const int MAX_PLAYERS = 4;
 	private int playersConnected;
 	private string initBoxText;
-	
 	private static PlayersConnectedBox self;
 
 	// Use this for initialization
@@ -15,7 +13,7 @@ public class PlayersConnectedBox : MonoBehaviour {
 		self = this;
 		playersConnected = 0;
 		initBoxText = box.text;
-		box.text = initBoxText + " " + playersConnected + "/" + MAX_PLAYERS;
+		box.text = initBoxText + " " + playersConnected + "/" + GameValues.MAX_PLAYERS;
 	}
 	
 	// Update is called once per frame
@@ -34,7 +32,7 @@ public class PlayersConnectedBox : MonoBehaviour {
 	[RPC]
 	void UpdateBox(int players) {
 		playersConnected = playersConnected + players;
-		box.text = initBoxText + " " + playersConnected + "/" + MAX_PLAYERS;
+		box.text = initBoxText + " " + playersConnected + "/" + GameValues.MAX_PLAYERS;
 	}
 	
 	public void SetPlayersConnected(int playersConnected){
