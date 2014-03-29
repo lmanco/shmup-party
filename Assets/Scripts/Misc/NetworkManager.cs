@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 public class NetworkManager : MonoBehaviour {
 
-	public string gameName = "SHMUP_PARTY_GAME";
+	public string gameType = "SHMUP_PARTY_GAME";
 	public MenuItem hostList, hostButtonPrefab;
 	public HostButtonAction hostButtonActionPrefab;
 	public Menu networkMenu, hostMenu, clientMenu;
@@ -58,13 +58,28 @@ public class NetworkManager : MonoBehaviour {
 	}
 	
 	public void StartServer() {
-		Network.InitializeServer(4, 25000, !Network.HavePublicAddress());
-		MasterServer.RegisterHost(gameName, "SHMUP Party!", "It's a shmup party.");
+		StartCoroutine("InitializeServer");
+	}
+	
+	IEnumerator InitializeServer() {
+		int hostNum = 0, port = 25000;
+		NetworkConnectionError err = Network.InitializeServer(4, port, !Network.HavePublicAddress());
+		while (err != NetworkConnectionError.NoError){
+			hostNum++;
+			port++;
+			err = Network.InitializeServer(4, port, !Network.HavePublicAddress());
+			yield return new WaitForSeconds(0.1f);
+		}
+		MasterServer.RegisterHost(gameType, ""+hostNum, ""+hostNum);
+		
+		NetworkManager.GetInstance().networkMenu.on = false;
+		NetworkManager.GetInstance().hostMenu.on = true;
+		PlayersConnectedBox.GetInstance().AddPlayersConnected(1);
 	}
 	
 	public void StopServer() {
-		Network.Disconnect();
 		MasterServer.UnregisterHost();
+		Network.Disconnect();
 	}
 	
 	public void RefreshHostList() {
@@ -76,7 +91,7 @@ public class NetworkManager : MonoBehaviour {
 		}
 		
 		// refresh
-		MasterServer.RequestHostList(gameName);
+		MasterServer.RequestHostList(gameType);
 		refreshing = true;
 	}
 	

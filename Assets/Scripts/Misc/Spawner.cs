@@ -10,6 +10,8 @@ public class Spawner : MonoBehaviour {
 	// Use this for initialization
 	void Start () {
 		int numPlayers = NetworkManager.GetInstance().numConnectedPlayers;
+		if (numPlayers < 1)
+			numPlayers = 1;
 		string pNumStr = Network.player.ToString();
 		int pNum = Convert.ToInt32(pNumStr);
 		

@@ -17,5 +17,6 @@ public class ClientCancelButtonAction : DefaultMenuAction {
 		Network.Disconnect();
 		NetworkManager.GetInstance().clientMenu.on = false;
 		NetworkManager.GetInstance().networkMenu.on = true;
+		PlayersConnectedBox.GetInstance().SetPlayersConnected(0);
 	}
 }

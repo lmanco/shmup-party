@@ -19,12 +19,15 @@ public class Player : BoundaryAware {
 	private Sprite playerSprite;
 	private float blinkTimer = 0f;
 	private string pNum;
+	
+	//private Vector3 targetPosition;
+	//private float adjustSpeed = 10.0f;
 
 	// Use this for initialization
 	void Start () {
+		playerSprite = GetComponent<SpriteRenderer>().sprite;
 		if (networkView.isMine){
 			fireTimer = 0f;
-			playerSprite = GetComponent<SpriteRenderer>().sprite;
 			setBounds();
 			spawning = true;
 			pNum = "none";
@@ -35,16 +38,17 @@ public class Player : BoundaryAware {
 
 	// Update is called once per frame
 	void Update () {
-		if (networkView.isMine){
-			if (blinking) {
-				blinkTimer += Time.deltaTime;
-				if (blinkTimer >= blinkTimeSeconds){
-					blinking = false;
-					blinkTimer = 0;
-				}
+		if (blinking) {
+			blinkTimer += Time.deltaTime;
+			if (blinkTimer >= blinkTimeSeconds){
+				blinking = false;
+				blinkTimer = 0;
 			}
-		
+		}
+	
+		if (networkView.isMine){		
 			if (spawning){
+				networkView.RPC("UpdatePosition", RPCMode.Others, transform.position, transform.rotation);
 				if (transform.position.y >= -4){
 					transform.position = new Vector3(transform.position.x, -4, 0);
 					spawning = false;
@@ -58,6 +62,8 @@ public class Player : BoundaryAware {
 				UpdateFireTimer();
 			}
 		}
+		//else
+			//transform.position = Vector3.MoveTowards(transform.position, targetPosition, Time.deltaTime * adjustSpeed);
 	}
 
 	void Move () {
@@ -84,6 +90,10 @@ public class Player : BoundaryAware {
 		}
 		else{
 			transform.position += vMovement;
+		}
+		
+		if ((hMovement.x != 0.0) || (vMovement.y != 0.0)){
+			networkView.RPC("UpdatePosition", RPCMode.Others, transform.position, transform.rotation);
 		}
 	}
 	
@@ -122,6 +132,10 @@ public class Player : BoundaryAware {
 		transform.position = new Vector3(Camera.main.ScreenToWorldPoint(new Vector3(spawnX, 0, 0)).x, -10, 0);
 		spawning = true;
 		StartCoroutine("Blink");
+		if (networkView.isMine){
+			networkView.RPC("UpdatePosition", RPCMode.Others, transform.position, transform.rotation);
+			networkView.RPC("StartBlink", RPCMode.Others);
+		}
 	}
 	
 	public void SetColor(Color color){
@@ -151,5 +165,22 @@ public class Player : BoundaryAware {
 	[RPC]
 	void UpdatePNum(string pNum){
 		this.pNum = pNum;
+	}
+	
+	/*[RPC]
+	void UpdatePosition(Vector3 newPosition, Quaternion rotation) {
+		targetPosition = newPosition;
+		transform.rotation = rotation;
+	}*/
+	
+	[RPC]
+	void UpdatePosition(Vector3 newPosition, Quaternion rotation) {
+		transform.position = newPosition;
+		transform.rotation = rotation;
+	}
+	
+	[RPC]
+	void StartBlink(){
+		StartCoroutine("Blink");
 	}
 }

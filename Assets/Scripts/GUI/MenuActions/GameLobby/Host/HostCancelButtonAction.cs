@@ -17,5 +17,6 @@ public class HostCancelButtonAction : DefaultMenuAction {
 		NetworkManager.GetInstance().StopServer();
 		NetworkManager.GetInstance().hostMenu.on = false;
 		NetworkManager.GetInstance().networkMenu.on = true;
+		PlayersConnectedBox.GetInstance().SetPlayersConnected(0);
 	}
 }

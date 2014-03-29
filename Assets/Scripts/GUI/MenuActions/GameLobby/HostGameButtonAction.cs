@@ -15,8 +15,5 @@ public class HostGameButtonAction : DefaultMenuAction {
 	
 	public override void Action(){
 		NetworkManager.GetInstance().StartServer();
-		NetworkManager.GetInstance().networkMenu.on = false;
-		NetworkManager.GetInstance().hostMenu.on = true;
-		PlayersConnectedBox.GetInstance().AddPlayersConnected(1);
 	}
 }
