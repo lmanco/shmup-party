@@ -2,24 +2,31 @@
 using System.Collections;
 
 public class Bullet : MonoBehaviour {
-
+	
+	private Sprite sprite;
 	public float speed = 20f;
+	public float direction = 0f;
+	private float dirRads;
 	public float maxSeconds = 1.0f;
 	
 	private float seconds;
 	
 	private Vector3 targetPosition = Vector3.zero;
 	private float adjustSpeed = 10.0f;
+	
+	private const float PI = 3.14f;
 
 	// Use this for initialization
 	void Start () {
+		sprite = GetComponent<SpriteRenderer>().sprite;
 		seconds = 0f;
+		dirRads = direction * PI / 180f;
 	}
 	
 	// Update is called once per frame
 	void Update () {
 		if (networkView.isMine){
-			transform.position += transform.up * speed * Time.deltaTime;
+			transform.position += new Vector3((float)Mathf.Cos(dirRads), (float)Mathf.Sin(dirRads), 0) * speed * Time.deltaTime;
 			seconds += Time.deltaTime;
 			if (seconds > maxSeconds){
 				networkView.RPC("Destroy", RPCMode.Others);
@@ -52,5 +59,10 @@ public class Bullet : MonoBehaviour {
 	void UpdatePosition(Vector3 newPosition, Quaternion rotation) {
 		targetPosition = newPosition;
 		transform.rotation = rotation;
+	}
+	
+	public void setSprite(Sprite sprite){
+		this.sprite = sprite;
+		GetComponent<SpriteRenderer>().sprite = this.sprite;
 	}
 }
